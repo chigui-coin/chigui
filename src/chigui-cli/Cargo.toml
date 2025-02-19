@@ -1,0 +1,10 @@
+[package]
+name = "cli"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.86.0"
+
+[dependencies]
+anyhow = { workspace = true }
+
+chigui-core = { workspace = true }

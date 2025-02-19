@@ -1,0 +1,5 @@
+{"type": "transfer", "from":"chigui","to":"chigui","value":3}
+{"type": "generate", "from":"chigui","to":"chigui","value":700}
+{"type": "transfer", "from":"chigui","to":"bob","value":2000}
+{"type": "generate", "from":"chigui","to":"chigui","value":100}
+{"type": "transfer", "from":"bob","to":"chigui","value":1}

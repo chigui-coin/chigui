@@ -1,0 +1,18 @@
+[workspace]
+members = [
+    "src/chigui-cli",
+    "src/chigui-core"
+]
+
+default-members = [
+    "src/chigui-cli"
+]
+
+resolver = "2"
+
+[workspace.dependencies]
+anyhow = "1.0.42"
+serde = "1.0.219"
+serde_json = "1.0.140"
+
+chigui-core = { path = "src/chigui-core" }
