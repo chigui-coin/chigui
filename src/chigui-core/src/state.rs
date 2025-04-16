@@ -39,33 +39,21 @@ impl State {
         balances.get(acct).cloned()
     }
 
-    fn apply(&self, tx: &Tx) -> Result<()> {
+    fn apply(&mut self, tx: &Tx) -> Result<()> {
         match tx {
             Tx::Transfer { from, to, value } => {
-                let balances = self.balances.borrow();
-                let from_balance = balances
-                    .get(from)
-                    .cloned()
-                    .ok_or(Error::msg("[From] Account not found."))?;
-                drop(balances);
+                let balances = self.balances.get_mut();
+                let [Some(from_balance), Some(to_balance)] = balances.get_disjoint_mut([from, to])
+                else {
+                    return Err(Error::msg("Account not found."));
+                };
 
-                if *value > from_balance {
+                if *value > *from_balance {
                     return Err(Error::msg("Insufficient balance."));
                 }
 
-                // FIXME: This is not atomic.
-                let mut balances = self.balances.borrow_mut();
-                let to = balances
-                    .get_mut(to)
-                    .ok_or(Error::msg("[To] Account not found."))?;
-                *to += value;
-                drop(balances);
-
-                let mut balances = self.balances.borrow_mut();
-                let from = balances
-                    .get_mut(from)
-                    .ok_or(Error::msg("[From] Account not found."))?;
-                *from -= value;
+                *to_balance += value;
+                *from_balance -= value;
 
                 Ok(())
             }
@@ -84,13 +72,14 @@ impl State {
     /// Create a new [`State`] instance from the given [`Genesis`] and a collection of [`Tx`] instances.
     fn from_parts(genesis: Genesis, txs: Vec<Tx>) -> Result<State> {
         let balances = genesis.balances.clone();
-        let state = State {
+        let mut state = State {
             balances: RefCell::new(balances),
             txs,
             genesis,
         };
+        let txs = state.txs.clone();
 
-        for tx in state.txs.iter() {
+        for tx in txs.iter() {
             state.apply(tx)?;
         }
 
@@ -134,7 +123,7 @@ mod tests {
                 map
             },
         };
-        let state = State::from_parts(genesis, Vec::default())?;
+        let mut state = State::from_parts(genesis, Vec::default())?;
 
         state.apply(&Tx::Transfer {
             from: Account(String::from("alice")),
@@ -166,7 +155,7 @@ mod tests {
                 map
             },
         };
-        let state = State::from_parts(genesis, Vec::default())?;
+        let mut state = State::from_parts(genesis, Vec::default())?;
 
         state.apply(&Tx::Generate {
             to: Account::new("bob"),
